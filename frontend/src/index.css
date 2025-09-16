@@ -1,0 +1,11 @@
+/* frontend/src/index.css */
+
+/* Importerer skrifttyper fra Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&display=swap');
+
+/* Nullstiller standard nettleserstiler for en ren start */
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

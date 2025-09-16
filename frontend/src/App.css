@@ -1,0 +1,175 @@
+/* frontend/src/App.css */
+
+/* Definerer fargepalett og fonter som globale variabler */
+:root {
+  --font-heading: 'Poppins', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --background-dark: #111827; /* Dyp marineblå */
+  --text-primary: #E5E7EB; /* Lys grå/off-white */
+  --text-secondary: #9CA3AF; /* Medium grå */
+  --text-heading: #FFFFFF;
+  --accent-gradient: linear-gradient(90deg, #8B5CF6, #3B82F6); /* Lilla-til-blå gradient */
+  --glass-bg: rgba(31, 41, 55, 0.5); /* Mørkere, mer subtil glass-effekt */
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --button-hover-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+}
+
+/* Grunnleggende stiler for hele appen */
+body {
+  background-color: var(--background-dark);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  margin: 0;
+}
+
+#root {
+  max-width: 1400px; /* Økt for å utnytte mer av vinduet */
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Typografi */
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  color: var(--text-heading);
+  font-weight: 700;
+}
+
+h1 { font-size: 2.5em; } /* Litt mindre for et renere utseende */
+h2 { font-size: 1.8em; }
+h3 { font-size: 1.5em; }
+
+a {
+  color: #8B5CF6;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #a78bfa; /* Lysere lilla for hover */
+}
+
+/* Hovednavigasjon */
+.main-nav {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 3rem;
+}
+
+.main-nav a {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.main-nav a:hover {
+  color: var(--text-primary);
+  background-color: var(--glass-bg);
+}
+
+/* Gjenbrukbar "glassboks"-stil for innholdskort */
+.glass-box {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Generelle knapper */
+button, .button {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  background: var(--accent-gradient);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+button:hover, .button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--button-hover-shadow);
+}
+
+button:disabled {
+  background: #374151; /* Mørkere grå for deaktivert */
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* Generelle input-felter */
+input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box; /* Sørger for at padding er inkludert i bredden */
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #8B5CF6;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* Meldinger til brukeren */
+.success-message {
+    color: #10B981;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.error-message {
+    color: #EF4444;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* Posisjonering for Avslutt-knappen */
+.app-container {
+    position: relative;
+}
+
+.quit-button {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    z-index: 100;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    padding: 8px 16px; /* Litt mindre padding enn standardknapper */
+    border: none;
+    border-radius: 8px;
+    color: white;
+    background: #4B5563; /* Nøytral gråfarge */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.quit-button:hover {
+    background: #6B7280; /* Lysere ved hover */
+    transform: translateY(-1px);
+    box-shadow: 0 0 10px rgba(107, 114, 128, 0.5);
+}

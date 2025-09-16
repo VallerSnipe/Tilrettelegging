@@ -1,0 +1,95 @@
+/* frontend/src/components/Modal.css */
+
+/* Generell layout for alle modalvinduer */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75); /* Litt mørkere for bedre kontrast */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px); /* Legger til en fin blur-effekt på bakgrunnen */
+}
+
+.modal-content {
+    background: #1F2937; /* Mørk gråblå, passer med temaet */
+    color: var(--text-primary);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    font-family: var(--font-heading);
+    color: var(--text-heading);
+}
+
+/* Spesifikt for ConfirmationModal */
+.modal-content p {
+    margin: 1rem 0 2rem 0;
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+/* Spesifikt for CommentModal */
+.comment-textarea {
+    width: 100%;
+    padding: 12px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    resize: vertical;
+}
+
+.comment-textarea:focus {
+    outline: none;
+    border-color: #8B5CF6; /* Lilla highlight fra temaet */
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* Felles knapper for alle modalvinduer */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.modal-button {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-button.cancel {
+    background-color: #4B5563; /* Medium grå */
+    color: white;
+}
+.modal-button.cancel:hover {
+    background-color: #6B7280;
+}
+
+/* Bekreftelsesknapp kan ha ulik farge/tekst */
+.modal-button.confirm {
+    background: var(--accent-gradient); /* Lilla/blå gradient fra temaet */
+    color: white;
+}
+.modal-button.confirm:hover {
+    box-shadow: var(--button-hover-shadow);
+}
