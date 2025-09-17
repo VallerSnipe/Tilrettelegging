@@ -1,85 +1,56 @@
-// main.js (Endelig, ren versjon)
+// main.js
 
 const { app, BrowserWindow, ipcMain, net, shell, Notification } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const log = require('electron-log');
 const semver = require('semver');
 const serverApp = require('./server.js');
-const dbHandler = require('./database-handler.js');
 
-// Konfigurer hvor loggfilen skal lagres. Dette må gjøres etter 'app' er klar.
-function configureLogging() {
-    log.transports.file.resolvePath = () => path.join(app.getPath('userData'), 'logs/main.log');
-    log.info('--- Ny app-økt startet ---');
-}
+// Importer funksjoner, men ikke initialiser noe ennå
+const { connectToDatabase } = require('./db.js');
+const { runMigrations } = require('./database-migration.js');
+const dbHandlerFactory = require('./database-handler.js');
 
-const PORT = 3001;
-let mainWindow;
+let db;
+let dbHandler;
 
+// ... (checkForUpdates, startServer, createWindow forblir uendret) ...
 function checkForUpdates() {
     log.info('Starter sjekk for oppdateringer...');
     const currentVersion = app.getVersion();
     log.info(`Gjeldende app-versjon: ${currentVersion}`);
-    
     const repoOwner = 'VallerSnipe';
     const repoName = 'Tilrettelegging';
-
     const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest`;
     log.info(`Sjekker mot URL: ${apiUrl}`);
-
     const request = net.request(apiUrl);
-
     request.on('response', (response) => {
         log.info(`Mottok svar fra GitHub. Statuskode: ${response.statusCode}`);
-        if (response.statusCode !== 200) {
-            log.error(`Feil statuskode mottatt: ${response.statusCode}`);
-            return;
-        }
-
+        if (response.statusCode !== 200) { log.error(`Feil statuskode mottatt: ${response.statusCode}`); return; }
         let body = '';
         response.on('data', (chunk) => { body += chunk; });
         response.on('end', () => {
             try {
                 const release = JSON.parse(body);
-                if (!release.tag_name) {
-                    log.warn('Svar fra GitHub manglet "tag_name". Sjekk at releasen er publisert korrekt.');
-                    return;
-                }
-                
+                if (!release.tag_name) { log.warn('Svar fra GitHub manglet "tag_name".'); return; }
                 const latestVersion = release.tag_name.replace('v', '');
                 log.info(`Siste versjon funnet på GitHub: ${latestVersion}`);
-                
                 log.info(`Sammenligner: ${latestVersion} (ny) > ${currentVersion} (gammel)?`);
                 if (semver.gt(latestVersion, currentVersion)) {
                     log.info('Ny versjon funnet! Viser varsel.');
-                    new Notification({
-                        title: 'Ny versjon tilgjengelig!',
-                        body: `Versjon ${latestVersion} er klar for nedlasting.`,
-                    }).on('click', () => {
-                        shell.openExternal(release.html_url);
-                    }).show();
+                    new Notification({ title: 'Ny versjon tilgjengelig!', body: `Versjon ${latestVersion} er klar for nedlasting.`}).on('click', () => { shell.openExternal(release.html_url); }).show();
                 } else {
                     log.info('Ingen ny versjon funnet.');
                 }
-            } catch (e) {
-                log.error('Kunne ikke behandle svar fra GitHub:', e.message);
-            }
+            } catch (e) { log.error('Kunne ikke behandle svar fra GitHub:', e.message); }
         });
     });
-
-    request.on('error', (error) => {
-        log.error(`Feil ved sjekk av oppdatering (nettverksfeil): ${error.message}`);
-    });
-
+    request.on('error', (error) => { log.error(`Feil ved sjekk av oppdatering (nettverksfeil): ${error.message}`); });
     request.end();
 }
-
-function startServer() {
-    serverApp.listen(PORT, () => {
-        log.info(`Backend-server for utvikling startet på http://localhost:${PORT}`);
-    });
-}
-
+let mainWindow;
+function startServer() { log.info(`Backend-server for utvikling startet.`); serverApp.listen(3001); }
 function createWindow() {
     mainWindow = new BrowserWindow({ width: 1400, height: 900, icon: path.join(__dirname, 'frontend/public/Valler.png'), webPreferences: { preload: path.join(__dirname, 'preload.js'), webSecurity: true, nodeIntegration: false, contextIsolation: true, }, });
     mainWindow.setMenu(null);
@@ -93,10 +64,40 @@ function createWindow() {
     mainWindow.on('closed', () => { mainWindow = null; });
 }
 
+// === NY, KORREKT OPPSTARTSSEKVENS ===
 app.whenReady().then(() => {
-    // Konfigurer logging så snart appen er klar
-    configureLogging();
+    // 1. Konfigurer logging så snart appen er klar
+    log.transports.file.resolvePath = () => path.join(app.getPath('userData'), 'logs/main.log');
+    log.info('--- Ny app-økt startet ---');
 
+    // 2. Bestem database-sti ETTER at appen er klar
+    const isPackaged = app.isPackaged;
+    let dbPath;
+    if (isPackaged) {
+        const userDataPath = app.getPath('userData');
+        dbPath = path.join(userDataPath, 'tilrettelegging.db');
+        const sourceDbPath = path.join(process.resourcesPath, 'tilrettelegging.db');
+        if (fs.existsSync(sourceDbPath) && !fs.existsSync(dbPath)) {
+            fs.copyFileSync(sourceDbPath, dbPath);
+            log.info(`Database kopiert til ${dbPath}`);
+        }
+    } else {
+        dbPath = path.join(__dirname, 'tilrettelegging.db');
+    }
+
+    // 3. Koble til og migrer databasen
+    try {
+        db = connectToDatabase(dbPath);
+        runMigrations(db);
+    } catch(err) {
+        log.error("KRITISK FEIL VED DATABASE-INIT:", err);
+        app.quit();
+    }
+
+    // 4. Initialiser database-handleren med den ferdige db-forbindelsen
+    dbHandler = dbHandlerFactory(db);
+
+    // 5. Start resten av appen
     const isDev = !app.isPackaged;
     if (isDev) { startServer(); }
     
@@ -106,8 +107,8 @@ app.whenReady().then(() => {
     app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 
+// ... (ipcMain.on og ipcMain.handle forblir identiske, da de bruker den nå initialiserte dbHandler)
 ipcMain.on('quit-app', () => { app.quit(); });
-
 ipcMain.handle('api-request', async (event, { method = 'GET', endpoint, params, body }) => {
     log.info(`IPC Mottatt: ${method} ${endpoint}`);
     try {
@@ -146,6 +147,5 @@ ipcMain.handle('api-request', async (event, { method = 'GET', endpoint, params, 
         return { error: error.message };
     }
 });
-
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('will-quit', () => { log.info('Appen avsluttes.'); });
