@@ -1,6 +1,6 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Oppdatering av bug i flere konfigurasjonsfiler",
   "main": "main.js",
   "scripts": {
@@ -27,19 +27,19 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "com.valler.tilrettelegging",
-    "productName": "Tilrettelegging Valler VGS",
+    "appId": "com.valler.tilretteleggingapp",
+    "productName": "tilrettelegging-app",
     "files": [
       "main.js",
       "preload.js",
       "server.js",
       "db.js",
       "database-handler.js",
-      "database-migration.js", 
+      "database-migration.js",
       "tilrettelegging.db",
       "frontend/dist/**/*",
-      "!Ny_release.txt",
-      "!README.md"
+      "!README.md",
+      "!Ny_release.txt"
     ],
     "directories": {
       "output": "release"
