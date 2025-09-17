@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.1.4",
-  "description": "Stabil release med fungerende oppdateringssjekk",
+  "version": "1.1.5",
+  "description": "Stabil release med fungerende oppdateringssjekk_v2",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",
