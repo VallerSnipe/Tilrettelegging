@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.1.3",
-  "description": "Diverse oppdateringer av konfigurasjonsfiler",
+  "version": "1.1.4",
+  "description": "Stabil release med fungerende oppdateringssjekk",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",
@@ -30,16 +30,17 @@
     "appId": "com.valler.tilretteleggingapp",
     "productName": "tilrettelegging-app",
     "files": [
-      "main.js",
-      "preload.js",
-      "server.js",
-      "db.js",
-      "database-handler.js",
-      "database-migration.js",
-      "tilrettelegging.db",
-      "frontend/dist/**/*",
-      "!README.md",
-      "!Ny_release.txt"
+      "**/*",
+      "!frontend/",
+      "!release/",
+      "!*.txt",
+      "!README.md"
+    ],
+    "extraResources": [
+      {
+        "from": "frontend/dist",
+        "to": "app/frontend/dist"
+      }
     ],
     "directories": {
       "output": "release"
