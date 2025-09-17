@@ -31,7 +31,7 @@ function DashboardPage() {
 
     return (
         <div className="dashboard-container">
-            <h1>Tilrettelegging Valler VGSS</h1>
+            <h1>Tilrettelegging Valler VGS</h1>
             <p>Søk etter en elev eller en faggruppe for å se detaljer og tilrettelegginger.</p>
             <div className="search-widgets">
                 <div className="search-widget">

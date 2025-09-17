@@ -1,0 +1,51 @@
+Sjekkliste for ny versjon
+Del 1: Forberedelser (Lokalt på din PC)
+Øk versjonsnummeret
+
+Åpne package.json.
+
+Endre "version" fra f.eks. "1.0.1" til "1.0.2" (for en liten fiks) eller "1.1.0" (for ny funksjonalitet).
+
+Commit og Push koden
+
+Lagre alle filene dine.
+
+Last opp den nyeste kildekoden til GitHub med en beskrivende melding. Kjør i terminalen:
+
+Bash
+
+git add .
+git commit -m "Beskrivelse av endringene i den nye versjonen"
+git push
+Del 2: Bygging (Lokalt på din PC)
+Bygg installasjonsfilen
+
+Kjør bygg-kommandoen i terminalen:
+
+Bash
+
+npm run build
+Vent til prosessen er ferdig. Den nye installasjonsfilen (f.eks. ...Setup 1.0.2.exe) ligger nå klar i release-mappen.
+
+Del 3: Publisering (På GitHub-siden)
+Opprett en ny "Release"
+
+Gå til ditt GitHub-repository i nettleseren.
+
+Klikk på "Releases" i menyen til høyre.
+
+Klikk på "Create a new release".
+
+Fyll ut og publiser
+
+Tag: Skriv inn v fulgt av det nye versjonsnummeret (f.eks. v1.0.2). Dette må matche package.json.
+
+Tittel: Gi den en tittel (f.eks. Versjon 1.0.2).
+
+Beskrivelse: Skriv kort hva som er nytt i denne versjonen.
+
+Last opp filen: Dra .exe-filen (og eventuelle andre installasjonsfiler) fra din lokale release-mappe og slipp den i boksen for "Attach binaries".
+
+Klikk på den grønne knappen "Publish release".
+
+Det var det! Nå er den nye versjonen publisert, og brukere med en eldre versjon vil få et varsel om å laste den ned neste gang de starter programmet.

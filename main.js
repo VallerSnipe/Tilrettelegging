@@ -8,15 +8,11 @@ const dbHandler = require('./database-handler.js');
 const PORT = 3001;
 let mainWindow;
 
-// Funksjon for å sjekke etter oppdateringer manuelt via GitHub API
 function checkForUpdates() {
     const currentVersion = app.getVersion();
-    // ----- VIKTIG: ERSTATT DISSE MED DINE GITHUB-DETALJER -----
-    const repoOwner = 'ditt-github-brukernavn'; 
+    const repoOwner = 'ditt-github-brukernavn';
     const repoName = 'ditt-repo-navn';
-    // -------------------------------------------------------------
 
-    // Stopper funksjonen hvis repo-info ikke er satt, for å unngå feil.
     if (repoOwner === 'ditt-github-brukernavn' || repoName === 'ditt-repo-navn') {
         console.log("Oppdateringssjekk hoppet over: Vennligst konfigurer repoOwner og repoName i main.js.");
         return;
@@ -27,9 +23,7 @@ function checkForUpdates() {
         protocol: 'https',
         hostname: 'api.github.com',
         path: `/repos/${repoOwner}/${repoName}/releases/latest`,
-        headers: {
-            'User-Agent': 'Electron-App-Updater'
-        }
+        headers: { 'User-Agent': 'Electron-App-Updater' }
     });
 
     request.on('response', (response) => {
@@ -38,16 +32,14 @@ function checkForUpdates() {
         response.on('end', () => {
             try {
                 const release = JSON.parse(body);
-                if (!release.tag_name) return; // Ingen release funnet
-                
+                if (!release.tag_name) return;
                 const latestVersion = release.tag_name.replace('v', '');
-                
                 if (latestVersion > currentVersion) {
                     new Notification({
                         title: 'Ny versjon tilgjengelig!',
                         body: `Versjon ${latestVersion} er klar for nedlasting.`,
                     }).on('click', () => {
-                        shell.openExternal(release.html_url); // Åpner GitHub Releases-siden
+                        shell.openExternal(release.html_url);
                     }).show();
                 }
             } catch (e) {
@@ -62,7 +54,6 @@ function checkForUpdates() {
 
     request.end();
 }
-
 
 function startServer() {
     serverApp.listen(PORT, () => {
@@ -84,7 +75,6 @@ function createWindow() {
     });
 
     mainWindow.setMenu(null);
-
     const isDev = !app.isPackaged;
 
     if (isDev) {
@@ -103,8 +93,6 @@ app.whenReady().then(() => {
         startServer();
     }
     createWindow();
-
-    // Kaller vår egen funksjon for å sjekke etter oppdateringer
     checkForUpdates();
 
     app.on('activate', () => {
@@ -142,6 +130,7 @@ ipcMain.handle('api-request', async (event, { method = 'GET', endpoint, params, 
         if (method === 'DELETE') {
             if (elevByIdMatch) return dbHandler.deleteElev(elevByIdMatch[1]);
             if (tilretteleggingMatch) return dbHandler.deleteTilrettelegging(tilretteleggingMatch[1]);
+            if (endpoint === '/api/database/all-data') return dbHandler.clearAllData();
         }
         if (method === 'PUT') {
             if (tilretteleggingMatch) return dbHandler.updateTilrettelegging(tilretteleggingMatch[1], body);

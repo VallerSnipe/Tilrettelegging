@@ -45,19 +45,12 @@ function getFaggruppeDetails(faggruppeNavn) {
     }
 }
 
-// VIKTIG: Pass på at denne funksjonen er oppdatert
 function getEleverForFaggruppe(faggruppeNavn) {
     try {
         const query = `
             SELECT 
-                e.elev_id, 
-                e.navn, 
-                e.klasse, 
-                t.faggruppe_navn, 
-                t.ekstra_tid, 
-                t.skjermet_plass, 
-                t.opplest_oppgave, 
-                t.kommentar 
+                e.elev_id, e.navn, e.klasse, t.faggruppe_navn, 
+                t.ekstra_tid, t.skjermet_plass, t.opplest_oppgave, t.kommentar 
             FROM elever e 
             JOIN tilrettelegginger t ON e.elev_id = t.elev_id 
             WHERE t.faggruppe_navn = ? 
@@ -99,13 +92,7 @@ function addTilrettelegging(data) {
             (elev_id, faggruppe_navn, fagnavn, lærer, ekstra_tid, skjermet_plass, opplest_oppgave, kommentar) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `);
-        const result = stmt.run(
-            elev_id, 
-            faggruppe_navn, 
-            fagnavn, 
-            lærer, 
-            0, 0, 0, ""
-        );
+        const result = stmt.run(elev_id, faggruppe_navn, fagnavn, lærer, 0, 0, 0, "");
         return { id: result.lastInsertRowid };
     } catch (error) {
         console.error(`Feil i addTilrettelegging:`, error);
@@ -171,9 +158,24 @@ function updateElev(id, { navn, klasse }) {
     }
 }
 
+function clearAllData() {
+    try {
+        const clearTransaction = db.transaction(() => {
+            db.prepare('DELETE FROM tilrettelegginger').run();
+            db.prepare('DELETE FROM elever').run();
+            db.prepare("DELETE FROM sqlite_sequence WHERE name IN ('elever', 'tilrettelegginger')").run();
+        });
+        clearTransaction();
+        return { success: true, message: 'All elevdata er slettet.' };
+    } catch (error) {
+        console.error(`Feil i clearAllData:`, error);
+        return { error: error.message };
+    }
+}
+
 module.exports = {
     getElever, getFaggrupper, getElevById, getFaggruppeDetails, getEleverForFaggruppe,
     addElev, deleteElev, addTilrettelegging, deleteTilrettelegging, updateTilrettelegging,
-    bulkUpdateTilrettelegginger, bulkUpdateKommentar,
-    updateElev
+    bulkUpdateTilrettelegginger, bulkUpdateKommentar, updateElev,
+    clearAllData
 };

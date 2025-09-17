@@ -1,6 +1,6 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "En app for å håndtere tilrettelegginger for elever.",
   "main": "main.js",
   "scripts": {
