@@ -10,8 +10,8 @@ let mainWindow;
 
 function checkForUpdates() {
     const currentVersion = app.getVersion();
-    const repoOwner = 'ditt-github-brukernavn';
-    const repoName = 'ditt-repo-navn';
+    const repoOwner = 'Vallersnipe';
+    const repoName = 'Tilrettelegging';
 
     if (repoOwner === 'ditt-github-brukernavn' || repoName === 'ditt-repo-navn') {
         console.log("Oppdateringssjekk hoppet over: Vennligst konfigurer repoOwner og repoName i main.js.");

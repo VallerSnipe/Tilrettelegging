@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.0.3",
-  "description": "En app for å håndtere tilrettelegginger for elever.",
+  "version": "1.0.4",
+  "description": "Oppdatering av konfigurasjonsfiler.",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",
@@ -37,6 +37,7 @@
       "tilrettelegging.db",
       "frontend/dist/**/*",
       "package.json"
+	  "!Ny_release.txt"
     ],
     "directories": {
       "output": "release"
