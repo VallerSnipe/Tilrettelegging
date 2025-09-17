@@ -10,7 +10,7 @@ let mainWindow;
 
 function checkForUpdates() {
     const currentVersion = app.getVersion();
-    const repoOwner = 'Vallersnipe';
+    const repoOwner = 'VallerSnipe';
     const repoName = 'Tilrettelegging';
 
     if (repoOwner === 'ditt-github-brukernavn' || repoName === 'ditt-repo-navn') {

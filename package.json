@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.0.4",
-  "description": "Oppdatering av konfigurasjonsfiler.",
+  "version": "1.0.5",
+  "description": "Oppdatering av konfigurasjonsfiler",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",
@@ -36,7 +36,7 @@
       "database-handler.js",
       "tilrettelegging.db",
       "frontend/dist/**/*",
-      "package.json"
+      "package.json",
 	  "!Ny_release.txt"
     ],
     "directories": {
