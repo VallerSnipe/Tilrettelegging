@@ -2,6 +2,7 @@
 
 const { app, BrowserWindow, ipcMain, net, shell, Notification } = require('electron');
 const path = require('path');
+const semver = require('semver'); // Bruker semver for pålitelig versjonssammenligning
 const serverApp = require('./server.js');
 const dbHandler = require('./database-handler.js');
 
@@ -33,8 +34,11 @@ function checkForUpdates() {
             try {
                 const release = JSON.parse(body);
                 if (!release.tag_name) return;
+                
                 const latestVersion = release.tag_name.replace('v', '');
-                if (latestVersion > currentVersion) {
+
+                // Bruker semver.gt() (greater than) for korrekt sammenligning
+                if (semver.gt(latestVersion, currentVersion)) {
                     new Notification({
                         title: 'Ny versjon tilgjengelig!',
                         body: `Versjon ${latestVersion} er klar for nedlasting.`,

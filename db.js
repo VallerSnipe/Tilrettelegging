@@ -1,14 +1,15 @@
-// db.js (Endelig versjon med korrekt databasehåndtering for Electron)
+// db.js (Endelig versjon med korrekt databaseplassering OG migreringssystem)
 
 const path = require('path');
 const fs = require('fs');
-const { app } = require('electron'); // Importerer 'app' fra Electron for å finne riktig mappe
+const { app } = require('electron');
 const Database = require('better-sqlite3');
 
-// Sjekker om appen kjører som en ferdig pakke
-const isPackaged = app.isPackaged;
+// 1. IMPORTERER DEN NYE MIGRERINGSFUNKSJONEN
+const { runMigrations } = require('./database-migration.js');
 
-// Setter riktig sti til databasen basert på om vi er i utvikling eller produksjon
+// 2. DIN EKSISTERENDE, KORREKTE LOGIKK FOR Å FINNE DATABASESTI BEHOLDES
+const isPackaged = app.isPackaged;
 let dbPath;
 
 if (isPackaged) {
@@ -17,40 +18,27 @@ if (isPackaged) {
     dbPath = path.join(userDataPath, 'tilrettelegging.db');
     
     // Kopier databasen fra den skrivebeskyttede kildekoden første gang appen kjøres
-    const sourceDbPath = path.join(__dirname, 'tilrettelegging.db');
-    if (!fs.existsSync(dbPath)) {
+    const sourceDbPath = path.join(process.resourcesPath, 'tilrettelegging.db'); // Bruker process.resourcesPath i en pakket app
+    if (fs.existsSync(sourceDbPath) && !fs.existsSync(dbPath)) {
         fs.copyFileSync(sourceDbPath, dbPath);
+        console.log(`Database kopiert til ${dbPath}`);
     }
 } else {
     // I UTVIKLING: Bruk databasen direkte fra prosjektmappen
     dbPath = path.join(__dirname, 'tilrettelegging.db');
 }
 
-// Koble til databasen på den korrekte, skrivebare stien
+// 3. KOBLE TIL DATABASEN
+console.log(`Kobler til database på: ${dbPath}`);
 const db = new Database(dbPath);
 
-function createTables() {
-    db.exec(`
-        CREATE TABLE IF NOT EXISTS elever (
-            elev_id INTEGER PRIMARY KEY,
-            navn TEXT NOT NULL,
-            klasse TEXT
-        );
-    `);
-    db.exec(`
-        CREATE TABLE IF NOT EXISTS tilrettelegginger (
-            tilrettelegging_id INTEGER PRIMARY KEY,
-            elev_id INTEGER NOT NULL,
-            faggruppe_navn TEXT,
-            fagnavn TEXT,
-            lærer TEXT,
-            ekstra_tid BOOLEAN,
-            skjermet_plass BOOLEAN,
-            opplest_oppgave BOOLEAN,
-            kommentar TEXT,
-            FOREIGN KEY (elev_id) REFERENCES elever(elev_id) ON DELETE CASCADE
-        );
-    `);
+// 4. KJØRER MIGRERINGER VED HVER OPPSTART (Erstatter createTables)
+// Denne funksjonen vil nå sørge for at tabellene eksisterer og er oppdatert.
+try {
+    runMigrations(db);
+} catch (error) {
+    console.error("KRITISK FEIL under databasemigrering:", error);
 }
 
-module.exports = { db, createTables };
+// 5. EKSPORTERER KUN db-objektet nå
+module.exports = { db };

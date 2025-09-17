@@ -49,3 +49,33 @@ Last opp filen: Dra .exe-filen (og eventuelle andre installasjonsfiler) fra din 
 Klikk på den grønne knappen "Publish release".
 
 Det var det! Nå er den nye versjonen publisert, og brukere med en eldre versjon vil få et varsel om å laste den ned neste gang de starter programmet.
+
+---------------------------------------------------------
+Oppdatering av database
+
+Løsningen: Database-migreringer
+Den profesjonelle og korrekte måten å løse dette på er med database-migreringer.
+
+Konseptet er enkelt: I stedet for å bytte ut hele databasen, gir vi appen en "oppskrift" på hvordan den skal oppdatere den eksisterende databasen fra en gammel versjon til den nye. Denne oppskriften kjøres automatisk første gang appen starter etter en oppdatering.
+
+Vi kan bruke en innebygd funksjon i SQLite som heter PRAGMA user_version for å holde styr på hvilken "versjon" databasestrukturen har.
+
+En enkel og robust migreringsstrategi
+La oss implementere dette. Vi lager en ny fil for å håndtere logikken.
+
+Steg 1: Lag en ny fil: database-migration.js
+Opprett denne filen i rotmappen din, ved siden av main.js. Denne filen vil inneholde alle endringene du gjør i databasen over tid.
+
+
+
+Steg 2: Kjør migreringene ved oppstart
+Vi må sørge for at runMigrations-funksjonen kjøres hver gang appen starter, rett etter at databaseforbindelsen er etablert. Det beste stedet for dette er i db.js-filen din.
+
+Oppdater db.js-filen din til å se slik ut:
+
+
+Oppdater app-versjonen: Øk "version" i package.json (f.eks. til 1.2.0).
+
+Publiser ny release: Bygg og last opp den nye versjonen til GitHub.
+
+Nå vil eksisterende brukere som oppdaterer få databasen sin automatisk oppgradert, uten å miste noe data, og nye brukere vil få en fersk database med den nyeste strukturen.
