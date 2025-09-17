@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.0.7",
-  "description": "Lagt til versjonsjekker",
+  "version": "1.0.8",
+  "description": "Oppdatering av bug i konfigurasjonsfil",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",
@@ -38,7 +38,8 @@
       "database-migration.js", 
       "tilrettelegging.db",
       "frontend/dist/**/*",
-      "!Ny_release.txt"
+      "!Ny_release.txt",
+      "!README.md"
     ],
     "directories": {
       "output": "release"
