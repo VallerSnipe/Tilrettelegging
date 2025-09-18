@@ -1,51 +1,60 @@
-.autocomplete-container {
-    position: relative;
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
-}
+/* frontend/src/components/AutocompleteSearch.css */
 
-.autocomplete-container input {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    box-sizing: border-box;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+.autocomplete-container {
+  /* Denne er kritisk: Setter en posisjoneringskontekst for forslagslisten */
+  position: relative;
 }
 
 .suggestions-list {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #ccc;
-    border-top: none;
-    border-radius: 0 0 5px 5px;
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    z-index: 100;
-    max-height: 200px;
-    overflow-y: auto;
-    color: #333;
-    text-align: left;
+  /* Posisjonerer listen absolutt, slik at den "flyter" over annet innhold */
+  position: absolute;
+  
+  /* Sørger for at listen havner på topp */
+  z-index: 100;
+
+  /* Posisjonering og bredde - HER ER ENDRINGEN */
+  top: 100%;
+  left: 0;
+  min-width: 100%; /* Sørger for at listen er MINST like bred som input-feltet */
+  width: auto;     /* Lar listen bli BREDERE hvis innholdet er langt */
+  margin-top: 8px;
+
+  /* Stil som matcher resten av appen */
+  background: #1F2937;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+
+  /* Liste-formatering */
+  list-style: none;
+  padding: 0.5rem;
+  margin: 0;
+  max-height: 250px;
+  overflow-y: auto;
 }
 
 .suggestions-list li {
-    padding: 10px;
-    cursor: pointer;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap; /* Sørger for at lang tekst ikke bryter linje */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .suggestions-list li:hover {
-    background-color: #f0f0f0;
+  background-color: #8B5CF6;
+  color: white;
 }
 
 .loading-indicator {
     position: absolute;
-    right: 10px;
     top: 50%;
+    right: 15px;
     transform: translateY(-50%);
-    color: #888;
+    color: var(--text-secondary);
+    font-size: 0.9em;
 }

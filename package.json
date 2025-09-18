@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.1.5",
-  "description": "Stabil release med fungerende oppdateringssjekk_v2",
+  "version": "1.2.1",
+  "description": "Stabil release med alle funksjoner og feilrettinger",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",
@@ -29,18 +29,17 @@
   "build": {
     "appId": "com.valler.tilretteleggingapp",
     "productName": "tilrettelegging-app",
+    "artifactName": "Tilrettelegging Valler VGS Setup ${version}.${ext}",
     "files": [
-      "**/*",
-      "!frontend/",
-      "!release/",
-      "!*.txt",
-      "!README.md"
-    ],
-    "extraResources": [
-      {
-        "from": "frontend/dist",
-        "to": "app/frontend/dist"
-      }
+      "main.js",
+      "preload.js",
+      "server.js",
+      "db.js",
+      "database-handler.js",
+      "database-migration.js",
+      "tilrettelegging.db",
+      "node_modules/**/*",
+      "frontend/dist/**/*"
     ],
     "directories": {
       "output": "release"

@@ -1,31 +1,44 @@
 /* frontend/src/pages/DashboardPage.css */
+
 .dashboard-container {
     text-align: center;
 }
-.dashboard-container h1 {
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 1rem;
-}
-.dashboard-container p {
+
+.dashboard-intro {
+    font-size: 1.2rem;
     color: var(--text-secondary);
     margin-bottom: 3rem;
 }
-.search-widgets {
+
+.search-widgets-container {
     display: flex;
     justify-content: center;
     gap: 2rem;
-    flex-wrap: wrap;
+    align-items: flex-start;
 }
+
 .search-widget {
     flex: 1;
-    min-width: 300px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    max-width: 450px;
+    text-align: left;
+    
+    /* --- HER ER LØSNINGEN --- */
+    /* 1. Gjør containeren til et posisjonert element */
+    position: relative; 
+    /* 2. Gi den en standard z-index */
+    z-index: 1;
+}
+
+/* 3. Når et element inni .search-widget får fokus (f.eks. input-feltet)... */
+.search-widget:focus-within {
+    /* ...gi hele containeren en høyere z-index */
+    z-index: 2;
+}
+/* ------------------------ */
+
+
+.search-widget h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
 }
