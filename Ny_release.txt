@@ -15,7 +15,7 @@ Last opp den nyeste kildekoden til GitHub med en beskrivende melding. Kjør i te
 Bash
 
 git add .
-git commit -m "Beskrivelse av endringene i den nye versjonen"
+git commit -m "Importert ny data til databasen"
 git push
 Del 2: Bygging (Lokalt på din PC)
 Bygg installasjonsfilen
