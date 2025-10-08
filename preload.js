@@ -1,11 +1,14 @@
-// preload.js (Komplett og oppdatert)
+// preload.js
 
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
-    // Sender en forespørsel og forventer et svar
+    // Sender en generell forespørsel og forventer et svar
     sendRequest: (requestDetails) => ipcRenderer.invoke('api-request', requestDetails),
     
-    // NY FUNKSJON: Sender en melding om å lukke appen (trenger ikke svar)
-    quitApp: () => ipcRenderer.send('quit-app')
+    // Sender melding om å lukke appen
+    quitApp: () => ipcRenderer.send('quit-app'),
+
+    // Ny funksjon for å håndtere filimport
+    importFile: (filePath) => ipcRenderer.invoke('import-file', filePath)
 });

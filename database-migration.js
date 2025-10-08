@@ -1,6 +1,5 @@
 // database-migration.js
 
-// Definer den nyeste versjonen av databasestrukturen din her.
 const LATEST_DB_VERSION = 1;
 
 function runMigrations(db) {
@@ -14,14 +13,9 @@ function runMigrations(db) {
         return;
     }
 
-    // Kjører alle migreringer innenfor én transaksjon for sikkerhet.
     const migrate = db.transaction(() => {
         console.log(`Starter migrering fra versjon ${currentVersion}...`);
 
-        // ====================================================================
-        // Migrering til versjon 1: Oppretter den grunnleggende strukturen.
-        // Denne kjøres kun hvis databasen er helt ny (versjon 0).
-        // ====================================================================
         if (currentVersion < 1) {
             console.log('Kjører migrering til v1: Oppretter databasens tabeller...');
             db.exec(`
@@ -48,18 +42,8 @@ function runMigrations(db) {
             console.log('Tabeller opprettet.');
         }
 
-        // ====================================================================
-        // FREMTIDIGE MIGRERINGER LEGGES TIL HER
-        // ====================================================================
-        // Eksempel: Migrering til versjon 2 (når du trenger det i fremtiden)
-        // if (currentVersion < 2) {
-        //     console.log('Kjører migrering til v2: Legger til epost-kolonne...');
-        //     db.prepare('ALTER TABLE elever ADD COLUMN epost TEXT').run();
-        // }
-        // ====================================================================
+        // Fremtidige migreringer legges til her...
 
-
-        // Oppdaterer databasens versjonsnummer til den nyeste til slutt.
         db.prepare(`PRAGMA user_version = ${LATEST_DB_VERSION}`).run();
         console.log(`Databasemigrering fullført. Ny versjon er ${LATEST_DB_VERSION}.`);
     });

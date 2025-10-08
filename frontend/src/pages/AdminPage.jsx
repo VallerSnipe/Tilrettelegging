@@ -55,8 +55,28 @@ function AdminPage() {
     const handleFileChange = (e) => {
         setImportFile(e.target.files[0]);
     };
+
+    // OPPDATERT FUNKSJON FOR IMPORT
     const handleImportSubmit = async () => {
-        alert("Import-funksjonalitet er ikke implementert ennå.");
+        if (!importFile) {
+            setImportMessage('Feil: Ingen fil er valgt.');
+            return;
+        }
+
+        setImportMessage('Importerer data, vennligst vent...');
+
+        const result = await window.api.importFile(importFile.path);
+
+        if (result.success) {
+            setImportMessage(`Suksess! ${result.message}`);
+        } else {
+            setImportMessage(`Feil: ${result.error}`);
+        }
+        
+        // Nullstill fil-input for å kunne velge samme fil igjen hvis man vil
+        const fileInput = document.querySelector('input[type="file"]');
+        if(fileInput) fileInput.value = '';
+        setImportFile(null);
     };
 
     const handleClearDatabase = async () => {
@@ -78,7 +98,7 @@ function AdminPage() {
             <h1>Elevadministrasjon</h1>
             {addMessage && <p className="success-message">{addMessage}</p>}
             {deleteMessage && <p className="error-message">{deleteMessage}</p>}
-            {importMessage && <p className="success-message">{importMessage}</p>}
+            {importMessage && <p className={importMessage.startsWith('Feil') ? 'error-message' : 'success-message'}>{importMessage}</p>}
             {clearDbMessage && <p className={clearDbMessage.startsWith('Feil') ? 'error-message' : 'success-message'}>{clearDbMessage}</p>}
             
             <section className="admin-section glass-box">

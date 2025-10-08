@@ -13,13 +13,19 @@
     margin-bottom: 30px;
 }
 
+/* --- NYE REGLER FOR STABLEREKKEFØLGE --- */
+.elevvisning-container > .glass-box {
+  position: relative;
+  z-index: 1;
+}
+
+.elevvisning-container > .glass-box:focus-within {
+  z-index: 2;
+}
+/* ------------------------------------- */
+
 .elev-info-box {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
 }
 
@@ -76,42 +82,18 @@
 .global-comment-section {
     display: flex;
     gap: 10px;
-    align-items: center; /* Sørger for at input og knapp er på linje */
+    align-items: center;
 }
 
 .global-comment-section input {
-    flex-grow: 1; /* Lar input-feltet vokse */
-}
-
-.global-comment-section button {
-    /* ----- ENDRING 1 HER ----- */
-    white-space: nowrap; /* Forhindrer at teksten "Bruk for alle" bryter */
-    flex-shrink: 0;    /* Forhindrer at selve knappen krymper */
-}
-
-.add-fag-section, .delete-fag-section {
-    margin-top: 2rem;
-}
-
-.add-fag-form {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-}
-.add-fag-form .autocomplete-container {
-    flex-grow: 2;
-}
-.add-fag-form input[type="text"] {
     flex-grow: 1;
 }
 
-.add-fag-button {
-    /* ----- ENDRING 2 HER ----- */
-    white-space: nowrap; /* Forhindrer at teksten "Legg til fag" bryter */
-    flex-shrink: 0;    /* Forhindrer at selve knappen krymper */
+.global-comment-section button {
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-/* Resten av stilene for tabell, sletting osv. */
 .tilrettelegging-table {
     width: 100%;
     border-collapse: collapse;
@@ -150,6 +132,28 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 250px;
+}
+
+.add-fag-section, .delete-fag-section {
+    margin-top: 2rem;
+    padding: 2rem;
+}
+
+.add-fag-form {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+.add-fag-form .autocomplete-container {
+    flex-grow: 2;
+}
+.add-fag-form input[type="text"] {
+    flex-grow: 1;
+}
+
+.add-fag-button {
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .fag-deletion-list {

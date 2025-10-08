@@ -1,4 +1,4 @@
-// main.js (Endelig, korrigert versjon)
+// main.js
 
 const { app, BrowserWindow, ipcMain, net, shell, Notification, dialog } = require('electron');
 const path = require('path');
@@ -63,7 +63,9 @@ function checkForUpdates() {
 }
 
 function startServer() {
-    serverApp.listen(PORT, () => { log.info(`Backend-server for utvikling startet.`); });
+    serverApp.listen(PORT, () => {
+        log.info(`Backend-server for utvikling startet.`);
+    });
 }
 
 function createWindow() {
@@ -74,7 +76,6 @@ function createWindow() {
         mainWindow.loadURL('http://localhost:5174');
         mainWindow.webContents.openDevTools();
     } else {
-        // Denne stien er nå 100% korrekt for hvordan electron-builder pakker filene
         mainWindow.loadFile(path.join(__dirname, 'frontend/dist/index.html'));
     }
     mainWindow.on('closed', () => { mainWindow = null; });
@@ -82,24 +83,23 @@ function createWindow() {
 
 app.whenReady().then(() => {
     configureLogging();
+
     const isPackaged = app.isPackaged;
     let dbPath;
     if (isPackaged) {
         const userDataPath = app.getPath('userData');
         dbPath = path.join(userDataPath, 'tilrettelegging.db');
-        // Den korrekte stien til kildedatabasen er relativ til __dirname
         const sourceDbPath = path.join(__dirname, 'tilrettelegging.db');
         if (fs.existsSync(sourceDbPath) && !fs.existsSync(dbPath)) {
             try {
                 fs.copyFileSync(sourceDbPath, dbPath);
                 log.info(`Database kopiert til ${dbPath}`);
-            } catch (err) {
-                log.error('Kunne ikke kopiere database:', err);
-            }
+            } catch (err) { log.error('Kunne ikke kopiere database:', err); }
         }
     } else {
         dbPath = path.join(__dirname, 'tilrettelegging.db');
     }
+
     try {
         db = connectToDatabase(dbPath);
         runMigrations(db);
@@ -107,7 +107,9 @@ app.whenReady().then(() => {
         log.error("KRITISK FEIL VED DATABASE-INIT:", err);
         app.quit();
     }
+
     dbHandler = dbHandlerFactory(db);
+
     ipcMain.handle('api-request', async (event, { method = 'GET', endpoint, params, body }) => {
         log.info(`IPC Mottatt: ${method} ${endpoint}`);
         try {
@@ -142,12 +144,27 @@ app.whenReady().then(() => {
             return { error: error.message };
         }
     });
+    
+    // NY HANDLER FOR FILIMPORT
+    ipcMain.handle('import-file', (event, filePath) => {
+        return dbHandler.importExcelData(filePath);
+    });
+
     const isDev = !app.isPackaged;
     if (isDev) { startServer(); }
     createWindow();
     checkForUpdates();
     app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
-ipcMain.on('quit-app', () => { app.quit(); });
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
-app.on('will-quit', () => { log.info('Appen avsluttes.'); });
+
+ipcMain.on('quit-app', () => {
+    app.quit();
+});
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('will-quit', () => {
+    log.info('Appen avsluttes.');
+});
