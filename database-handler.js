@@ -29,8 +29,28 @@ module.exports = function(db) {
             catch (error) { console.error(`Feil i getFaggruppeDetails:`, error); return { error: error.message }; }
         },
         getEleverForFaggruppe(faggruppeNavn) {
-            try { const query = `SELECT e.elev_id, e.navn, e.klasse, t.faggruppe_navn, t.ekstra_tid, t.skjermet_plass, t.opplest_oppgave, t.kommentar FROM elever e JOIN tilrettelegginger t ON e.elev_id = t.elev_id WHERE t.faggruppe_navn = ? ORDER BY e.navn`; return db.prepare(query).all(faggruppeNavn); } 
-            catch (error) { console.error(`Feil i getEleverForFaggruppe:`, error); return { error: error.message }; }
+            try {
+                // 1. Hent listen over elever som før
+                const eleverQuery = `
+                    SELECT e.elev_id, e.navn, e.klasse, t.faggruppe_navn, 
+                           t.ekstra_tid, t.skjermet_plass, t.opplest_oppgave, t.kommentar 
+                    FROM elever e 
+                    JOIN tilrettelegginger t ON e.elev_id = t.elev_id 
+                    WHERE t.faggruppe_navn = ? 
+                    ORDER BY e.navn`;
+                const elever = db.prepare(eleverQuery).all(faggruppeNavn);
+
+                // 2. Trekk ut rom-informasjon fra faggruppenavnet
+                const parts = faggruppeNavn.split(' ');
+                const rom = parts.length > 1 ? parts[0] : 'Ikke spesifisert';
+
+                // 3. Returner et objekt som inneholder både elever og rom
+                return { elever, rom };
+
+            } catch (error) {
+                console.error(`Feil i getEleverForFaggruppe:`, error);
+                return { error: error.message };
+            }
         },
         addElev({ navn, klasse }) {
             try { const result = db.prepare('INSERT INTO elever (navn, klasse) VALUES (?, ?)').run(navn, klasse); return { id: result.lastInsertRowid, navn, klasse }; } 

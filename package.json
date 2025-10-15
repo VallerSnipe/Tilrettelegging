@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.2.6",
-  "description": "Importert ny data til databasen",
+  "version": "1.2.7",
+  "description": "Oppdatert rapportvisningen i excel fra Faggruppevisning",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",

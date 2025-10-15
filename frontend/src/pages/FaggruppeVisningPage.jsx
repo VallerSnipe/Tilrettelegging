@@ -14,6 +14,7 @@ function FaggruppeVisningPage() {
 
     const [sokeTekst, setSokeTekst] = useState('');
     const [elever, setElever] = useState([]);
+    const [rom, setRom] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -29,15 +30,16 @@ function FaggruppeVisningPage() {
                 endpoint: `/api/faggruppe/${faggruppe}`
             });
             if (result && !result.error) {
-                setElever(result);
-                if (result.length === 0) {
+                setElever(result.elever || []);
+                setRom(result.rom || 'Ikke spesifisert');
+                if (!result.elever || result.elever.length === 0) {
                     setMessage('Ingen elever funnet i denne faggruppen.');
                 }
             } else {
                 throw new Error(result?.error || 'Ukjent feil');
             }
         } catch (err) {
-            setError('Feil ved søk. Sjekk faggruppenavnet og prøv igjen.');
+            setError('Feil ved henting av data. Sjekk faggruppenavnet og prøv igjen.');
         } finally {
             setLoading(false);
         }
@@ -64,15 +66,56 @@ function FaggruppeVisningPage() {
     
     const handleEksportExcel = () => {
         if (elever.length === 0) return alert('Ingen data å eksportere.');
-        const dataForEksport = elever.map(elev => ({
-            'Navn': elev.navn, 
-            'Klasse': elev.klasse, 
-            'Ekstra tid': elev.ekstra_tid === 1 ? 'Ja' : '', 
-            'Skjermet plass': elev.skjermet_plass === 1 ? 'Ja' : '', 
-            'Opplest oppgave': elev.opplest_oppgave === 1 ? 'Ja' : '', 
-            'Kommentar': elev.kommentar || ''
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(dataForEksport);
+    
+        // 1. Forbered data
+        const reportHeader = [
+            ["ROM:", rom],
+            ["FAG:", aktivFaggruppeNavn],
+            [] // Tom rad
+        ];
+        const tableHeader = ['Navn', 'Klasse', 'Ekstra tid', 'Skjermet plass', 'Opplest oppgave', 'Kommentar'];
+        const tableBody = elever.map(elev => [
+            elev.navn, elev.klasse,
+            elev.ekstra_tid === 1 ? 'Ja' : '',
+            elev.skjermet_plass === 1 ? 'Ja' : '',
+            elev.opplest_oppgave === 1 ? 'Ja' : '',
+            elev.kommentar || ''
+        ]);
+        const finalData = [...reportHeader, tableHeader, ...tableBody];
+    
+        // 2. Lag regneark
+        const worksheet = XLSX.utils.aoa_to_sheet(finalData);
+    
+        // 3. Definer stiler
+        const greenFill = { fgColor: { rgb: "C6EFCE" } }; // Lys grønn farge
+        const border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
+    
+        // 4. Gå gjennom alle celler og bruk stiler
+        const range = XLSX.utils.decode_range(worksheet['!ref']);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cell_ref = XLSX.utils.encode_cell({ c: C, r: R });
+                if (!worksheet[cell_ref]) continue;
+                if (!worksheet[cell_ref].s) worksheet[cell_ref].s = {};
+    
+                // Bruk ramme på alle celler unntatt den tomme raden
+                if (R !== 2) {
+                    worksheet[cell_ref].s.border = border;
+                }
+    
+                // Bruk grønn fyllfarge på header-rader
+                if (R === 0 || R === 1 || R === 3) {
+                    worksheet[cell_ref].s.fill = greenFill;
+                }
+            }
+        }
+    
+        // 5. Sett kolonnebredder
+        worksheet['!cols'] = [
+            { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 40 }
+        ];
+    
+        // 6. Lag og last ned filen
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Elever");
         XLSX.writeFile(workbook, `${aktivFaggruppeNavn.replace(/[/\\]/g, '-')}_elever.xlsx`);
@@ -81,9 +124,12 @@ function FaggruppeVisningPage() {
     const handleEksportPDF = () => {
         if (elever.length === 0) return alert('Ingen data å eksportere.');
         const doc = new jsPDF();
-        doc.text(`Elever for faggruppe: ${aktivFaggruppeNavn}`, 14, 20);
+        
+        doc.text(`ROM: ${rom}`, 14, 20);
+        doc.text(`FAG: ${aktivFaggruppeNavn}`, 14, 28);
+
         autoTable(doc, {
-            startY: 30,
+            startY: 35,
             head: [['Navn', 'Klasse', 'Ekstra tid', 'Skjermet plass', 'Opplest oppgave', 'Kommentar']],
             body: elever.map(elev => [
                 elev.navn, 
@@ -127,7 +173,10 @@ function FaggruppeVisningPage() {
             {!loading && aktivFaggruppeNavn && (
                 <div className="faggruppe-content-section glass-box">
                     <div className="faggruppe-header">
-                        <h2>Faggruppe: {aktivFaggruppeNavn}</h2>
+                        <div className="report-info">
+                            <p><strong>ROM:</strong> {rom}</p>
+                            <p><strong>FAG:</strong> {aktivFaggruppeNavn}</p>
+                        </div>
                         <div className="button-group">
                             <button onClick={handleEksportExcel}>Eksporter til Excel</button>
                             <button onClick={handleEksportPDF}>Eksporter til PDF</button>
