@@ -27,7 +27,7 @@ function FaggruppeVisningPage() {
         try {
             const result = await window.api.sendRequest({
                 method: 'GET',
-                endpoint: `/api/faggruppe/${faggruppe}`
+                endpoint: `/api/faggruppe/${encodeURIComponent(faggruppe)}`
             });
             if (result && !result.error) {
                 setElever(result.elever || []);

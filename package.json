@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.2.7",
-  "description": "Oppdatert rapportvisningen i excel fra Faggruppevisning",
+  "version": "1.2.8",
+  "description": "Fix: URL-encoding av faggruppenavn i IPC-kall",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",
