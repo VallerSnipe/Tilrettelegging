@@ -1,0 +1,36 @@
+GitHub push commands cheat sheet
+
+First time from this folder (set remote, commit, push):
+
+git remote add origin https://github.com/VallerSnipe/Tilrettelegging.git
+git add -A
+git commit -m "Din commit-melding"
+git branch -M main
+git push -u origin main
+
+Next times (after upstream is set):
+
+git status
+git add -A
+git commit -m "Din commit-melding"
+git push
+
+New branch (optional):
+
+git checkout -b feature/min-endring
+git add -A
+git commit -m "Implementert min endring"
+git push -u origin feature/min-endring
+
+Create and push tag for release (optional):
+
+git tag v1.2.9
+git push origin v1.2.9
+
+Fix common issues:
+
+# Set upstream if missing
+git push -u origin main
+
+# Change wrong remote URL
+git remote set-url origin https://github.com/VallerSnipe/Tilrettelegging.git
