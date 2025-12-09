@@ -1,0 +1,92 @@
+/* frontend/src/pages/FaggruppeVisningPage.css */
+
+.faggruppe-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.faggruppe-search-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.faggruppe-search-section h1 {
+    margin: 0;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 10px;
+    width: 50%;
+    max-width: 500px;
+}
+
+.search-input-group .autocomplete-container {
+    flex-grow: 1;
+}
+
+.faggruppe-content-section {
+    padding: 2rem;
+}
+
+.faggruppe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.faggruppe-header h2 {
+    margin: 0;
+    color: var(--text-heading);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.faggruppe-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.faggruppe-table th, .faggruppe-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.faggruppe-table th {
+    font-family: var(--font-heading);
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.faggruppe-table tr:last-child td {
+    border-bottom: none;
+}
+
+.elev-navn-clickable {
+    color: #a78bfa; /* Lys lillafarge */
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.elev-navn-clickable:hover {
+    color: #c4b5fd; /* Lysere lilla ved hover */
+    text-decoration: underline;
+}
+
+.kommentar-faggruppe {
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

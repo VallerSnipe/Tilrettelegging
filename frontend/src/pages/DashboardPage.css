@@ -1,0 +1,49 @@
+/* frontend/src/pages/DashboardPage.css */
+
+.dashboard-container {
+    text-align: center;
+}
+
+/* --- LEGG TIL DENNE NYE REGELEN --- */
+.dashboard-container h1 {
+    font-size: 3em; /* Sørger for at den beholder størrelsen */
+    /* Bruker gradienten fra temaet ditt for en fin effekt */
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent; /* Gjør selve tekstfargen gjennomsiktig */
+    padding-bottom: 0.5rem; /* Litt ekstra luft under */
+}
+/* ---------------------------------- */
+
+.dashboard-intro {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 3rem;
+}
+
+.search-widgets-container {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.search-widget {
+    flex: 1;
+    max-width: 450px;
+    text-align: left;
+    position: relative; 
+    z-index: 1;
+}
+
+.search-widget:focus-within {
+    z-index: 2;
+}
+
+
+.search-widget h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}

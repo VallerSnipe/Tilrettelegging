@@ -1,0 +1,59 @@
+{
+  "name": "tilrettelegging-app",
+  "version": "1.2.9",
+  "description": "Endret søkfunksjonalitet i Faggruppe",
+  "main": "main.js",
+  "scripts": {
+    "start": "node node_modules/electron/cli.js .",
+    "build": "electron-builder",
+    "prebuild": "npm run build --prefix frontend",
+    "postinstall": "electron-builder install-app-deps",
+    "dev:react": "npm run dev --prefix frontend",
+    "dev:electron": "npm start",
+    "dev": "concurrently \"npm:dev:react\" \"npm:dev:electron\""
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "better-sqlite3": "^11.1.2",
+    "cors": "^2.8.5",
+    "electron-log": "^5.4.3",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "semver": "^7.7.2",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^31.0.1",
+    "electron-builder": "^24.13.3",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5",
+    "to-ico": "^1.1.5"
+  },
+  "build": {
+    "appId": "com.valler.tilretteleggingapp",
+    "productName": "tilrettelegging-app",
+    "artifactName": "Tilrettelegging Valler VGS Setup ${version}.${ext}",
+    "files": [
+      "main.js",
+      "preload.js",
+      "server.js",
+      "db.js",
+      "database-handler.js",
+      "database-migration.js",
+      "tilrettelegging.db",
+      "node_modules/**/*",
+      "frontend/dist/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "frontend/public/Valler.ico"
+    },
+    "asarUnpack": [
+      "**/node_modules/better-sqlite3/**/*"
+    ]
+  }
+}
