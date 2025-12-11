@@ -1,6 +1,6 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.2.9.1",
+  "version": "1.2.10",
   "description": "Lagt til versjonsnummer",
   "main": "main.js",
   "scripts": {

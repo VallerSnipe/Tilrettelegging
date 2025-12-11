@@ -78,7 +78,39 @@ function createWindow() {
     } else {
         mainWindow.loadFile(path.join(__dirname, 'frontend/dist/index.html'));
     }
-    // React-basert versjonsbadge vil stå for visningen
+    // Når innholdet er lastet, injiser en liten badge med versjonsnummer nederst til høyre
+    const injectVersionBadge = () => {
+        const script = `
+          (async () => {
+            try {
+              if (window?.api?.sendRequest) {
+                const version = await window.api.sendRequest({ method: 'GET', endpoint: '/app/version' });
+                if (typeof version === 'string' && version.length > 0) {
+                  const el = document.createElement('div');
+                  el.textContent = 'v' + version;
+                  el.setAttribute('aria-label', 'Appversjon');
+                  el.style.position = 'fixed';
+                  el.style.right = '12px';
+                  el.style.bottom = '12px';
+                  el.style.padding = '4px 8px';
+                  el.style.borderRadius = '6px';
+                  el.style.fontFamily = "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+                  el.style.fontSize = '12px';
+                  el.style.color = '#E5E7EB';
+                  el.style.background = 'rgba(31,41,55,0.6)';
+                  el.style.border = '1px solid rgba(255,255,255,0.12)';
+                  el.style.backdropFilter = 'blur(6px)';
+                  el.style.webkitBackdropFilter = 'blur(6px)';
+                  el.style.zIndex = '1000';
+                  document.body.appendChild(el);
+                }
+              }
+            } catch (e) { }
+          })();
+        `;
+        mainWindow.webContents.executeJavaScript(script).catch(() => {});
+    };
+    mainWindow.webContents.on('did-finish-load', injectVersionBadge);
     mainWindow.on('closed', () => { mainWindow = null; });
 }
 
