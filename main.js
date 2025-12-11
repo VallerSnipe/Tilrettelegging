@@ -78,6 +78,7 @@ function createWindow() {
     } else {
         mainWindow.loadFile(path.join(__dirname, 'frontend/dist/index.html'));
     }
+    // React-basert versjonsbadge vil stå for visningen
     mainWindow.on('closed', () => { mainWindow = null; });
 }
 
@@ -120,6 +121,7 @@ app.whenReady().then(() => {
             const bulkTilretteleggingMatch = endpoint.match(/^\/api\/elever\/(\d+)\/bulk-update-tilrettelegginger$/);
             const bulkKommentarMatch = endpoint.match(/^\/api\/elever\/(\d+)\/bulk-update-kommentar$/);
             if (method === 'GET') {
+                if (endpoint === '/app/version') return app.getVersion();
                 if (elevByIdMatch) return dbHandler.getElevById(elevByIdMatch[1]);
                 if (faggruppeDetailsMatch) return dbHandler.getFaggruppeDetails(decodeURIComponent(faggruppeDetailsMatch[1]));
                 if (faggruppeListMatch) return dbHandler.getEleverForFaggruppe(decodeURIComponent(faggruppeListMatch[1]));

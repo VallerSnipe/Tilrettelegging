@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.2.9",
-  "description": "Endret søkfunksjonalitet i Faggruppe",
+  "version": "1.2.9.1",
+  "description": "Lagt til versjonsnummer",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",
