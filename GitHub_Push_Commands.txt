@@ -12,7 +12,7 @@ Next times (after upstream is set):
 
 git status
 git add -A
-git commit -m "Din commit-melding"
+git commit -m "Lagt til versjonsnummer"
 git push
 
 New branch (optional):

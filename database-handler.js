@@ -48,19 +48,20 @@ module.exports = function(db) {
                 // Bruk LIKE for å støtte delvis søk på faggruppe
                 const eleverQuery = `
                     SELECT e.elev_id, e.navn, e.klasse, t.faggruppe_navn, 
-                           t.ekstra_tid, t.skjermet_plass, t.opplest_oppgave, t.kommentar 
+                           t.ekstra_tid, t.skjermet_plass, t.opplest_oppgave, t.kommentar, t.lærer
                     FROM elever e 
                     JOIN tilrettelegginger t ON e.elev_id = t.elev_id 
                     WHERE t.faggruppe_navn LIKE ? 
                     ORDER BY e.navn`;
                 const elever = db.prepare(eleverQuery).all(`%${faggruppeNavn}%`);
 
-                // Finn faktisk faggruppenavn og rom
+                // Finn faktisk faggruppenavn, rom og lærer
                 const funnetFaggruppeNavn = elever.length > 0 ? elever[0].faggruppe_navn : faggruppeNavn;
                 const parts = funnetFaggruppeNavn.split(' ');
                 const rom = parts.length > 1 ? parts[0] : 'Ikke spesifisert';
+                const lærer = elever.length > 0 ? elever[0].lærer : 'Ikke spesifisert';
 
-                return { elever, rom };
+                return { elever, rom, lærer };
             } catch (error) {
                 console.error(`Feil i getEleverForFaggruppe:`, error);
                 return { error: error.message };

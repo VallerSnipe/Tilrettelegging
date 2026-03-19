@@ -15,6 +15,7 @@ function FaggruppeVisningPage() {
     const [sokeTekst, setSokeTekst] = useState('');
     const [elever, setElever] = useState([]);
     const [rom, setRom] = useState('');
+    const [lærer, setLærer] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -32,6 +33,7 @@ function FaggruppeVisningPage() {
             if (result && !result.error) {
                 setElever(result.elever || []);
                 setRom(result.rom || 'Ikke spesifisert');
+                setLærer(result.lærer || 'Ikke spesifisert');
                 if (!result.elever || result.elever.length === 0) {
                     setMessage('Ingen elever funnet i denne faggruppen.');
                 }
@@ -71,10 +73,12 @@ function FaggruppeVisningPage() {
         const reportHeader = [
             ["ROM:", rom],
             ["FAG:", aktivFaggruppeNavn],
+            ["FAGLÆRER:", lærer],
             [] // Tom rad
         ];
-        const tableHeader = ['Navn', 'Klasse', 'Ekstra tid', 'Skjermet plass', 'Opplest oppgave', 'Kommentar'];
+        const tableHeader = ['Oppmøte', 'Navn', 'Klasse', 'Ekstra tid', 'Skjermet plass', 'Opplest oppgave', 'Kommentar'];
         const tableBody = elever.map(elev => [
+            '', // Oppmøte kolonne (tom for nå)
             elev.navn, elev.klasse,
             elev.ekstra_tid === 1 ? 'Ja' : '',
             elev.skjermet_plass === 1 ? 'Ja' : '',
@@ -99,12 +103,12 @@ function FaggruppeVisningPage() {
                 if (!worksheet[cell_ref].s) worksheet[cell_ref].s = {};
     
                 // Bruk ramme på alle celler unntatt den tomme raden
-                if (R !== 2) {
+                if (R !== 3) {
                     worksheet[cell_ref].s.border = border;
                 }
     
                 // Bruk grønn fyllfarge på header-rader
-                if (R === 0 || R === 1 || R === 3) {
+                if (R === 0 || R === 1 || R === 2 || R === 4) {
                     worksheet[cell_ref].s.fill = greenFill;
                 }
             }
@@ -112,7 +116,7 @@ function FaggruppeVisningPage() {
     
         // 5. Sett kolonnebredder
         worksheet['!cols'] = [
-            { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 40 }
+            { wch: 10 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 40 }
         ];
     
         // 6. Lag og last ned filen

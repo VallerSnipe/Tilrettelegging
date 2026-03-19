@@ -1,7 +1,7 @@
 {
   "name": "tilrettelegging-app",
-  "version": "1.2.10",
-  "description": "Lagt til versjonsnummer",
+  "version": "1.2.11",
+  "description": "Lagt til rad og kolonne i eksport fra Fagruppevisning",
   "main": "main.js",
   "scripts": {
     "start": "node node_modules/electron/cli.js .",
