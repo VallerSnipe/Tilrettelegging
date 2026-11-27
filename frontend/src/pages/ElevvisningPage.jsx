@@ -1,14 +1,14 @@
-// frontend/src/pages/ElevvisningPage.jsx (Utdrag med endringer)
+// frontend/src/pages/ElevvisningPage.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AutocompleteSearch from '../components/AutocompleteSearch';
 import ConfirmationModal from '../components/ConfirmationModal';
-import CommentModal from '../components/CommentModal'; // <-- 1. Importer ny komponent
+import CommentModal from '../components/CommentModal';
+import { KLASSELISTE } from '../constants/klasseliste';
 import './ElevvisningPage.css';
 
 function ElevvisningPage() {
-    // ... (alle eksisterende states forblir de samme)
     const { id } = useParams();
     const navigate = useNavigate();
     const [elevSearchTerm, setElevSearchTerm] = useState('');
@@ -24,11 +24,8 @@ function ElevvisningPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({ navn: '', klasse: '' });
 
-    // --- 2. Ny state for kommentar-modal ---
     const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
     const [currentEditingComment, setCurrentEditingComment] = useState(null); // { id, kommentar }
-
-    const klasseliste = ['1STA', '1STB', '1STC', '1STD', '1STE', '1STF', '1STG', '2STA', '2STB', '2STC', '2STD', '2STE', '2STF', '2STG', '3STA', '3STB', '3STC', '3STD', '3STE', '3STF', '3STG'];
 
     // ... (fetchElevData og andre funksjoner forblir de samme)
     const fetchElevData = useCallback(async (elevId) => {
@@ -104,30 +101,42 @@ function ElevvisningPage() {
     const handleUpdateTilrettelegging = async (tilretteleggingId, field, value) => {
         // For checkboxes, konverter boolean til tall
         const finalValue = typeof value === 'boolean' ? (value ? 1 : 0) : value;
+        const previousTilrettelegginger = tilrettelegginger;
 
         const optimisticUpdate = tilrettelegginger.map(t =>
             t.tilrettelegging_id === tilretteleggingId ? { ...t, [field]: finalValue } : t
         );
         setTilrettelegginger(optimisticUpdate);
-        
+        setError('');
+
         const updatedFag = optimisticUpdate.find(t => t.tilrettelegging_id === tilretteleggingId);
 
-        await window.api.sendRequest({
+        const result = await window.api.sendRequest({
             method: 'PUT',
             endpoint: `/api/tilrettelegging/${tilretteleggingId}`,
             body: updatedFag
         });
+        if (!result || result.error) {
+            setTilrettelegginger(previousTilrettelegginger);
+            setError('Kunne ikke lagre endring på tilrettelegging.');
+        }
     };
-    // ... (resten av de eksisterende funksjonene forblir de samme)
+
     const handleGlobalTilretteleggingChange = async (field, value) => {
-        if (!elev) return;
+        if (!elev || tilrettelegginger.length === 0) return;
+        const previousTilrettelegginger = tilrettelegginger;
         const oppdaterteTilrettelegginger = tilrettelegginger.map(t => ({ ...t, [field]: value ? 1 : 0 }));
         setTilrettelegginger(oppdaterteTilrettelegginger);
-        await window.api.sendRequest({
+        setError('');
+        const result = await window.api.sendRequest({
             method: 'POST',
             endpoint: `/api/elever/${elev.elev_id}/bulk-update-tilrettelegginger`,
             body: { field, value }
         });
+        if (!result || result.error) {
+            setTilrettelegginger(previousTilrettelegginger);
+            setError('Kunne ikke oppdatere tilrettelegginger for alle fag.');
+        }
     };
     const handleElevSearchSelect = (selectedElev) => {
         if (selectedElev && selectedElev.elev_id) {
@@ -138,20 +147,29 @@ function ElevvisningPage() {
     const handleFaggruppeSelectForNewFag = async (selectedFaggruppe) => {
         const faggruppeNavn = selectedFaggruppe.faggruppe_navn;
         setNyttFagData(prev => ({ ...prev, faggruppe_navn: faggruppeNavn, fagnavn: '', lærer: '' }));
-        const result = await window.api.sendRequest({ method: 'GET', endpoint: `/api/faggrupper/${faggruppeNavn}` });
+        const result = await window.api.sendRequest({
+            method: 'GET',
+            endpoint: `/api/faggrupper/${encodeURIComponent(faggruppeNavn)}`
+        });
         if (result && !result.error) {
             setNyttFagData(prev => ({ ...prev, faggruppe_navn: faggruppeNavn, fagnavn: result.fagnavn || '', lærer: result.lærer || '' }));
         }
     };
     const handleGlobalKommentarSubmit = async () => {
-        if (!elev) return;
+        if (!elev || tilrettelegginger.length === 0) return;
+        const previousTilrettelegginger = tilrettelegginger;
         const oppdaterteTilrettelegginger = tilrettelegginger.map(t => ({ ...t, kommentar: globalKommentar }));
         setTilrettelegginger(oppdaterteTilrettelegginger);
-        await window.api.sendRequest({
+        setError('');
+        const result = await window.api.sendRequest({
             method: 'POST',
             endpoint: `/api/elever/${elev.elev_id}/bulk-update-kommentar`,
             body: { kommentar: globalKommentar }
         });
+        if (!result || result.error) {
+            setTilrettelegginger(previousTilrettelegginger);
+            setError('Kunne ikke oppdatere felles kommentar.');
+        }
     };
     const handleAddFagChange = (e) => {
         const { name, value } = e.target;
@@ -180,13 +198,19 @@ function ElevvisningPage() {
         if (selectedFagForDeletion.length > 0) { setIsDeleteModalOpen(true); }
     };
     const confirmDeletion = async () => {
+        let hadError = false;
         for (const fagId of selectedFagForDeletion) {
-            await window.api.sendRequest({ method: 'DELETE', endpoint: `/api/tilrettelegging/${fagId}` });
+            const result = await window.api.sendRequest({ method: 'DELETE', endpoint: `/api/tilrettelegging/${fagId}` });
+            if (!result || result.error) hadError = true;
         }
-        setMessage('Valgte fag er slettet!');
         setSelectedFagForDeletion([]);
         setIsDeleteModalOpen(false);
-        fetchElevData(id);
+        await fetchElevData(id);
+        if (hadError) {
+            setError('Ett eller flere fag kunne ikke slettes.');
+        } else {
+            setMessage('Valgte fag er slettet!');
+        }
     };
 
     if (loading) return <p style={{textAlign: 'center'}}>Laster elevdata...</p>;
@@ -214,7 +238,7 @@ function ElevvisningPage() {
                             onChange={handleEditChange}
                         />
                         <AutocompleteSearch
-                            suggestionsList={klasseliste.map(k => ({ klasse: k }))}
+                            suggestionsList={KLASSELISTE.map(k => ({ klasse: k }))}
                             displayField="klasse"
                             placeholder="Klasse"
                             value={editData.klasse}
@@ -234,13 +258,34 @@ function ElevvisningPage() {
                 )}
                 
                 <div className="global-tilrettelegging-checkboxes">
-                    <label><input type="checkbox" checked={tilrettelegginger.every(t => t.ekstra_tid === 1)} onChange={(e) => handleGlobalTilretteleggingChange('ekstra_tid', e.target.checked)} /> Ekstra tid (for alle fag)</label>
-                    <label><input type="checkbox" checked={tilrettelegginger.every(t => t.skjermet_plass === 1)} onChange={(e) => handleGlobalTilretteleggingChange('skjermet_plass', e.target.checked)} /> Skjermet plass (for alle fag)</label>
-                    <label><input type="checkbox" checked={tilrettelegginger.every(t => t.opplest_oppgave === 1)} onChange={(e) => handleGlobalTilretteleggingChange('opplest_oppgave', e.target.checked)} /> Opplest oppgave (for alle fag)</label>
+                    <label>
+                        <input
+                            type="checkbox"
+                            disabled={tilrettelegginger.length === 0}
+                            checked={tilrettelegginger.length > 0 && tilrettelegginger.every(t => t.ekstra_tid === 1)}
+                            onChange={(e) => handleGlobalTilretteleggingChange('ekstra_tid', e.target.checked)}
+                        /> Ekstra tid (for alle fag)
+                    </label>
+                    <label>
+                        <input
+                            type="checkbox"
+                            disabled={tilrettelegginger.length === 0}
+                            checked={tilrettelegginger.length > 0 && tilrettelegginger.every(t => t.skjermet_plass === 1)}
+                            onChange={(e) => handleGlobalTilretteleggingChange('skjermet_plass', e.target.checked)}
+                        /> Skjermet plass (for alle fag)
+                    </label>
+                    <label>
+                        <input
+                            type="checkbox"
+                            disabled={tilrettelegginger.length === 0}
+                            checked={tilrettelegginger.length > 0 && tilrettelegginger.every(t => t.opplest_oppgave === 1)}
+                            onChange={(e) => handleGlobalTilretteleggingChange('opplest_oppgave', e.target.checked)}
+                        /> Opplest oppgave (for alle fag)
+                    </label>
                 </div>
                 <div className="global-comment-section">
-                    <input type="text" placeholder="Skriv felles kommentar for alle fag her..." value={globalKommentar} onChange={(e) => setGlobalKommentar(e.target.value)} />
-                    <button onClick={handleGlobalKommentarSubmit}>Bruk for alle</button>
+                    <input type="text" placeholder="Skriv felles kommentar for alle fag her..." value={globalKommentar} onChange={(e) => setGlobalKommentar(e.target.value)} disabled={tilrettelegginger.length === 0} />
+                    <button onClick={handleGlobalKommentarSubmit} disabled={tilrettelegginger.length === 0}>Bruk for alle</button>
                 </div>
             </div>
 

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import AutocompleteSearch from '../components/AutocompleteSearch';
+import ExportRoomModal from '../components/ExportRoomModal';
 import './FaggruppeVisningPage.css';
 
 function FaggruppeVisningPage() {
@@ -19,6 +20,7 @@ function FaggruppeVisningPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const [exportFormat, setExportFormat] = useState(null); // 'excel' | 'pdf' | null
     
     const fetchEleverData = async (faggruppe) => {
         if (!faggruppe) { setLoading(false); return; }
@@ -40,7 +42,7 @@ function FaggruppeVisningPage() {
             } else {
                 throw new Error(result?.error || 'Ukjent feil');
             }
-        } catch (err) {
+        } catch {
             setError('Feil ved henting av data. Sjekk faggruppenavnet og prøv igjen.');
         } finally {
             setLoading(false);
@@ -66,12 +68,29 @@ function FaggruppeVisningPage() {
         navigateToFaggruppe(suggestion.faggruppe_navn);
     };
     
-    const handleEksportExcel = () => {
+    const openExportModal = (format) => {
         if (elever.length === 0) return alert('Ingen data å eksportere.');
-    
+        setExportFormat(format);
+    };
+
+    const handleConfirmExport = (valgtRom) => {
+        const format = exportFormat;
+        setExportFormat(null);
+        if (valgtRom) {
+            setRom(valgtRom);
+        }
+        const eksportRom = valgtRom || '';
+        if (format === 'excel') {
+            handleEksportExcel(eksportRom);
+        } else if (format === 'pdf') {
+            handleEksportPDF(eksportRom);
+        }
+    };
+
+    const handleEksportExcel = (eksportRom) => {
         // 1. Forbered data
         const reportHeader = [
-            ["ROM:", rom],
+            ["ROM:", eksportRom],
             ["FAG:", aktivFaggruppeNavn],
             ["FAGLÆRER:", lærer],
             [] // Tom rad
@@ -90,10 +109,12 @@ function FaggruppeVisningPage() {
         // 2. Lag regneark
         const worksheet = XLSX.utils.aoa_to_sheet(finalData);
     
-        // 3. Definer stiler
-        const greenFill = { fgColor: { rgb: "C6EFCE" } }; // Lys grønn farge
-        const border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
-    
+        // 3. Definer stiler (støttes av xlsx-js-style)
+        const greenFill = { patternType: "solid", fgColor: { rgb: "C6EFCE" } }; // Lys grønn farge
+        const headerFont = { bold: true };
+        const thinSide = { style: "thin", color: { rgb: "000000" } };
+        const border = { top: thinSide, bottom: thinSide, left: thinSide, right: thinSide };
+
         // 4. Gå gjennom alle celler og bruk stiler
         const range = XLSX.utils.decode_range(worksheet['!ref']);
         for (let R = range.s.r; R <= range.e.r; ++R) {
@@ -101,22 +122,23 @@ function FaggruppeVisningPage() {
                 const cell_ref = XLSX.utils.encode_cell({ c: C, r: R });
                 if (!worksheet[cell_ref]) continue;
                 if (!worksheet[cell_ref].s) worksheet[cell_ref].s = {};
-    
+
                 // Bruk ramme på alle celler unntatt den tomme raden
                 if (R !== 3) {
                     worksheet[cell_ref].s.border = border;
                 }
-    
-                // Bruk grønn fyllfarge på header-rader
+
+                // Bruk grønn fyllfarge og fet skrift på header-rader
                 if (R === 0 || R === 1 || R === 2 || R === 4) {
                     worksheet[cell_ref].s.fill = greenFill;
+                    worksheet[cell_ref].s.font = headerFont;
                 }
             }
         }
     
         // 5. Sett kolonnebredder
         worksheet['!cols'] = [
-            { wch: 10 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 40 }
+            { wch: 13 }, { wch: 30 }, { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 40 }
         ];
     
         // 6. Lag og last ned filen
@@ -125,15 +147,15 @@ function FaggruppeVisningPage() {
         XLSX.writeFile(workbook, `${aktivFaggruppeNavn.replace(/[/\\]/g, '-')}_elever.xlsx`);
     };
 
-    const handleEksportPDF = () => {
-        if (elever.length === 0) return alert('Ingen data å eksportere.');
+    const handleEksportPDF = (eksportRom) => {
         const doc = new jsPDF();
         
-        doc.text(`ROM: ${rom}`, 14, 20);
+        doc.text(`ROM: ${eksportRom}`, 14, 20);
         doc.text(`FAG: ${aktivFaggruppeNavn}`, 14, 28);
+        doc.text(`FAGLÆRER: ${lærer}`, 14, 36);
 
         autoTable(doc, {
-            startY: 35,
+            startY: 43,
             head: [['Navn', 'Klasse', 'Ekstra tid', 'Skjermet plass', 'Opplest oppgave', 'Kommentar']],
             body: elever.map(elev => [
                 elev.navn, 
@@ -180,10 +202,11 @@ function FaggruppeVisningPage() {
                         <div className="report-info">
                             <p><strong>ROM:</strong> {rom}</p>
                             <p><strong>FAG:</strong> {aktivFaggruppeNavn}</p>
+                            <p><strong>FAGLÆRER:</strong> {lærer}</p>
                         </div>
                         <div className="button-group">
-                            <button onClick={handleEksportExcel}>Eksporter til Excel</button>
-                            <button onClick={handleEksportPDF}>Eksporter til PDF</button>
+                            <button onClick={() => openExportModal('excel')}>Eksporter til Excel</button>
+                            <button onClick={() => openExportModal('pdf')}>Eksporter til PDF</button>
                             <button onClick={() => navigate('/')}>Tilbake</button>
                         </div>
                     </div>
@@ -192,7 +215,7 @@ function FaggruppeVisningPage() {
                             <thead><tr><th>Navn</th><th>Klasse</th><th>Ekstra tid</th><th>Skjermet plass</th><th>Opplest oppgave</th><th>Kommentar</th></tr></thead>
                             <tbody>
                                 {elever.map((elev) => (
-                                    <tr key={elev.elev_id}>
+                                    <tr key={elev.tilrettelegging_id ?? `${elev.elev_id}-${elev.faggruppe_navn}`}>
                                         <td className="elev-navn-clickable" onClick={() => handleElevClick(elev.elev_id)}>
                                             {elev.navn}
                                         </td>
@@ -208,6 +231,14 @@ function FaggruppeVisningPage() {
                     ) : (<p style={{textAlign: 'center', padding: '1rem'}}>{message}</p>)}
                 </div>
             )}
+
+            <ExportRoomModal
+                isOpen={exportFormat !== null}
+                onClose={() => setExportFormat(null)}
+                onConfirm={handleConfirmExport}
+                initialRoom={rom}
+                format={exportFormat}
+            />
         </div>
     );
 }

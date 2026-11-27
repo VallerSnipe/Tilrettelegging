@@ -1,6 +1,6 @@
 // frontend/src/App.jsx
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage.jsx';
@@ -9,14 +9,30 @@ import FaggruppeVisningPage from './pages/FaggruppeVisningPage.jsx';
 import './App.css';
 
 function App() {
-    // Funksjon som kaller den nye metoden i preload.js
+    const [appVersion, setAppVersion] = useState('');
+
+    useEffect(() => {
+        let active = true;
+        if (window?.api?.sendRequest) {
+            window.api
+                .sendRequest({ method: 'GET', endpoint: '/app/version' })
+                .then((version) => {
+                    if (active && typeof version === 'string' && version.length > 0) {
+                        setAppVersion(version);
+                    }
+                })
+                .catch(() => {});
+        }
+        return () => { active = false; };
+    }, []);
+
+    // Funksjon som kaller metoden i preload.js
     const handleQuitApp = () => {
         window.api.quitApp();
     };
 
     return (
         <div className="app-container">
-            {/* NY KNAPP FOR Å LUKKE APPLIKASJONEN */}
             <button onClick={handleQuitApp} className="quit-button">
                 Avslutt program
             </button>
@@ -33,6 +49,11 @@ function App() {
                     <Route path="/faggruppe/:faggruppe" element={<FaggruppeVisningPage />} />
                 </Routes>
             </main>
+            {appVersion && (
+                <div className="version-badge" aria-label="Appversjon">
+                    v{appVersion}
+                </div>
+            )}
         </div>
     );
 }

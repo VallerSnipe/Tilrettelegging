@@ -85,3 +85,12 @@ v1.2.9
 - Endret søk i Faggruppe til delstreng: du kan nå søke på REA eller MAT uavhengig av prefiks (A/, B/, G1/, osv.).
 - Oppdatert .gitignore: ekskluderer lokal databasefil (tilrettelegging.db) og uploads/.
 - Husk å tagge releasen som v1.2.9 på GitHub.
+---------------------------------------------------------
+v1.3.0
+
+- Lagt til valg for å spesifisere ROM ved eksport til Excel og PDF i Faggruppevisning.
+- Byttet til xlsx-js-style i frontend så grønn header, fet skrift og rammer vises i Excel-rapporter.
+- Viser FAGLÆRER i Faggruppevisning og PDF-eksport.
+- Slått på PRAGMA foreign_keys = ON i SQLite (kaskadesletting ved sletting av elev).
+- Rettet feil i globale avkrysningsbokser, URL-encoding, faggruppesøk, duplikatsjekk ved Excel-import og filimport (webUtils.getPathForFile).
+- Fjernet lokal tilrettelegging.db fra installasjonspakken, flyttet versjonsbadge til React, og ryddet bort ubrukte filer og npm-pakker.

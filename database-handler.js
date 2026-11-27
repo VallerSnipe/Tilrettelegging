@@ -45,21 +45,24 @@ module.exports = function(db) {
         },
         getEleverForFaggruppe(faggruppeNavn) {
             try {
-                // Bruk LIKE for å støtte delvis søk på faggruppe
-                const eleverQuery = `
-                    SELECT e.elev_id, e.navn, e.klasse, t.faggruppe_navn, 
+                const søk = String(faggruppeNavn ?? '').trim();
+                const baseSelect = `
+                    SELECT t.tilrettelegging_id, e.elev_id, e.navn, e.klasse, t.faggruppe_navn,
                            t.ekstra_tid, t.skjermet_plass, t.opplest_oppgave, t.kommentar, t.lærer
-                    FROM elever e 
-                    JOIN tilrettelegginger t ON e.elev_id = t.elev_id 
-                    WHERE t.faggruppe_navn LIKE ? 
-                    ORDER BY e.navn`;
-                const elever = db.prepare(eleverQuery).all(`%${faggruppeNavn}%`);
+                    FROM elever e
+                    JOIN tilrettelegginger t ON e.elev_id = t.elev_id`;
+
+                // Prøv eksakt treff først, fall tilbake til delstrengssøk hvis ingen eksakte treff
+                let elever = db.prepare(`${baseSelect} WHERE t.faggruppe_navn = ? ORDER BY e.navn`).all(søk);
+                if (elever.length === 0) {
+                    elever = db.prepare(`${baseSelect} WHERE t.faggruppe_navn LIKE ? ORDER BY t.faggruppe_navn, e.navn`).all(`%${søk}%`);
+                }
 
                 // Finn faktisk faggruppenavn, rom og lærer
-                const funnetFaggruppeNavn = elever.length > 0 ? elever[0].faggruppe_navn : faggruppeNavn;
+                const funnetFaggruppeNavn = elever.length > 0 ? elever[0].faggruppe_navn : søk;
                 const parts = funnetFaggruppeNavn.split(' ');
                 const rom = parts.length > 1 ? parts[0] : 'Ikke spesifisert';
-                const lærer = elever.length > 0 ? elever[0].lærer : 'Ikke spesifisert';
+                const lærer = elever.length > 0 && elever[0].lærer ? elever[0].lærer : 'Ikke spesifisert';
 
                 return { elever, rom, lærer };
             } catch (error) {
@@ -69,8 +72,13 @@ module.exports = function(db) {
         },
         addElev({ navn, klasse }) {
             try {
-                const result = db.prepare('INSERT INTO elever (navn, klasse) VALUES (?, ?)').run(navn, klasse);
-                return { id: result.lastInsertRowid, navn, klasse };
+                const rensetNavn = String(navn ?? '').trim();
+                const rensetKlasse = String(klasse ?? '').trim().toUpperCase();
+                if (!rensetNavn) {
+                    return { error: 'Navn kan ikke være tomt.' };
+                }
+                const result = db.prepare('INSERT INTO elever (navn, klasse) VALUES (?, ?)').run(rensetNavn, rensetKlasse);
+                return { id: result.lastInsertRowid, navn: rensetNavn, klasse: rensetKlasse };
             } catch (error) {
                 console.error(`Feil i addElev:`, error);
                 return { error: error.message };
@@ -140,9 +148,17 @@ module.exports = function(db) {
         },
         updateElev(id, { navn, klasse }) {
             try {
-                const formatertNavn = navn.split(' ').map(n => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase()).join(' ');
+                const rensetNavn = String(navn ?? '').trim();
+                const rensetKlasse = String(klasse ?? '').trim().toUpperCase();
+                if (!rensetNavn || !rensetKlasse) {
+                    return { error: 'Navn og klasse kan ikke være tomme.' };
+                }
+                const formatertNavn = rensetNavn
+                    .split(/\s+/)
+                    .map(n => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase())
+                    .join(' ');
                 const stmt = db.prepare('UPDATE elever SET navn = ?, klasse = ? WHERE elev_id = ?');
-                const result = stmt.run(formatertNavn, klasse.toUpperCase(), id);
+                const result = stmt.run(formatertNavn, rensetKlasse, id);
                 return { changes: result.changes };
             } catch (error) {
                 console.error(`Feil i updateElev:`, error);
@@ -165,6 +181,9 @@ module.exports = function(db) {
         },
         importExcelData(filePath) {
             try {
+                if (!filePath || typeof filePath !== 'string') {
+                    return { error: 'Ugyldig filsti for import.' };
+                }
                 const workbook = xlsx.readFile(filePath);
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
@@ -173,25 +192,35 @@ module.exports = function(db) {
                 const dataRows = data.slice(1);
                 const insertElev = db.prepare('INSERT INTO elever (navn, klasse) VALUES (?, ?)');
                 const findElev = db.prepare('SELECT elev_id FROM elever WHERE navn = ? AND klasse = ?');
-                const insertTilrettelegging = db.prepare('INSERT INTO tilrettelegginger (elev_id, faggruppe_navn, fagnavn, lærer) VALUES (?, ?, ?, ?)');
+                const findTilrettelegging = db.prepare('SELECT tilrettelegging_id FROM tilrettelegginger WHERE elev_id = ? AND faggruppe_navn = ?');
+                const insertTilrettelegging = db.prepare('INSERT INTO tilrettelegginger (elev_id, faggruppe_navn, fagnavn, lærer, kommentar) VALUES (?, ?, ?, ?, ?)');
+                let insertedCount = 0;
+                let skippedDuplicates = 0;
                 const importTransaction = db.transaction(() => {
                     for (const row of dataRows) {
-                        const navn = row[0];
-                        const klasse = row[1];
-                        const fagnavn = row[2];
-                        const laerer = row[3];
-                        const faggruppe = row[4];
+                        const navn = String(row[0] ?? '').trim();
+                        const klasse = String(row[1] ?? '').trim();
+                        const fagnavn = String(row[2] ?? '').trim();
+                        const laerer = String(row[3] ?? '').trim();
+                        const faggruppe = String(row[4] ?? '').trim();
                         if (!navn || !klasse || !faggruppe) { continue; }
                         let elev = findElev.get(navn, klasse);
                         if (!elev) {
                             const result = insertElev.run(navn, klasse);
                             elev = { elev_id: result.lastInsertRowid };
                         }
-                        insertTilrettelegging.run(elev.elev_id, faggruppe, fagnavn, laerer);
+                        const existing = findTilrettelegging.get(elev.elev_id, faggruppe);
+                        if (existing) {
+                            skippedDuplicates++;
+                            continue;
+                        }
+                        insertTilrettelegging.run(elev.elev_id, faggruppe, fagnavn, laerer, '');
+                        insertedCount++;
                     }
                 });
                 importTransaction();
-                return { success: true, message: `${dataRows.length} rader ble behandlet.` };
+                const duplicateInfo = skippedDuplicates > 0 ? ` (${skippedDuplicates} duplikater hoppet over)` : '';
+                return { success: true, message: `${insertedCount} rader ble importert${duplicateInfo}.` };
             } catch (error) {
                 console.error('Feil under import fra Excel:', error);
                 return { error: 'Kunne ikke importere filen. Sjekk at formatet er riktig og at filen ikke er åpen i Excel.' };

@@ -1,13 +1,15 @@
 // frontend/src/pages/AdminPage.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AutocompleteSearch from '../components/AutocompleteSearch';
 import ConfirmationModal from '../components/ConfirmationModal';
+import { KLASSELISTE } from '../constants/klasseliste';
 import './AdminPage.css';
 
 function AdminPage() {
     const navigate = useNavigate();
+    const fileInputRef = useRef(null);
     const [elevNavn, setElevNavn] = useState('');
     const [elevKlasse, setElevKlasse] = useState('');
     const [deleteSearchTerm, setDeleteSearchTerm] = useState('');
@@ -19,11 +21,10 @@ function AdminPage() {
     const [elevToDelete, setElevToDelete] = useState(null);
     const [isClearDbModalOpen, setIsClearDbModalOpen] = useState(false);
     const [clearDbMessage, setClearDbMessage] = useState('');
-    
-    const klasseliste = ['1STA', '1STB', '1STC', '1STD', '1STE', '1STF', '1STG', '2STA', '2STB', '2STC', '2STD', '2STE', '2STF', '2STG', '3STA', '3STB', '3STC', '3STD', '3STE', '3STF', '3STG'];
 
     const handleAddSubmit = async (e) => {
         e.preventDefault();
+        setAddMessage('');
         const result = await window.api.sendRequest({
             method: 'POST',
             endpoint: '/api/elever',
@@ -32,7 +33,7 @@ function AdminPage() {
         if (result && result.id) {
             navigate(`/elev/${result.id}`);
         } else {
-            setAddMessage(`Feil: Kunne ikke legge til elev.`);
+            setAddMessage(`Feil: ${result?.error || 'Kunne ikke legge til elev.'}`);
         }
     };
     
@@ -45,18 +46,21 @@ function AdminPage() {
 
     const confirmDeletion = async () => {
         if (!elevToDelete) return;
-        await window.api.sendRequest({ method: 'DELETE', endpoint: `/api/elever/${elevToDelete.elev_id}` });
-        setDeleteMessage(`Elev '${elevToDelete.navn}' er slettet!`);
+        const result = await window.api.sendRequest({ method: 'DELETE', endpoint: `/api/elever/${elevToDelete.elev_id}` });
+        if (result && !result.error) {
+            setDeleteMessage(`Elev '${elevToDelete.navn}' er slettet!`);
+        } else {
+            setDeleteMessage(`Feil: Kunne ikke slette elev. ${result?.error || ''}`);
+        }
         setDeleteSearchTerm('');
         setIsModalOpen(false);
         setElevToDelete(null);
     };
 
     const handleFileChange = (e) => {
-        setImportFile(e.target.files[0]);
+        setImportFile(e.target.files[0] || null);
     };
 
-    // OPPDATERT FUNKSJON FOR IMPORT
     const handleImportSubmit = async () => {
         if (!importFile) {
             setImportMessage('Feil: Ingen fil er valgt.');
@@ -65,17 +69,16 @@ function AdminPage() {
 
         setImportMessage('Importerer data, vennligst vent...');
 
-        const result = await window.api.importFile(importFile.path);
+        const result = await window.api.importFile(importFile);
 
-        if (result.success) {
+        if (result && result.success) {
             setImportMessage(`Suksess! ${result.message}`);
         } else {
-            setImportMessage(`Feil: ${result.error}`);
+            setImportMessage(`Feil: ${result?.error || 'Ukjent feil under import.'}`);
         }
-        
+
         // Nullstill fil-input for å kunne velge samme fil igjen hvis man vil
-        const fileInput = document.querySelector('input[type="file"]');
-        if(fileInput) fileInput.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = '';
         setImportFile(null);
     };
 
@@ -96,8 +99,8 @@ function AdminPage() {
     return (
         <div className="admin-container">
             <h1>Elevadministrasjon</h1>
-            {addMessage && <p className="success-message">{addMessage}</p>}
-            {deleteMessage && <p className="error-message">{deleteMessage}</p>}
+            {addMessage && <p className={addMessage.startsWith('Feil') ? 'error-message' : 'success-message'}>{addMessage}</p>}
+            {deleteMessage && <p className={deleteMessage.startsWith('Feil') ? 'error-message' : 'success-message'}>{deleteMessage}</p>}
             {importMessage && <p className={importMessage.startsWith('Feil') ? 'error-message' : 'success-message'}>{importMessage}</p>}
             {clearDbMessage && <p className={clearDbMessage.startsWith('Feil') ? 'error-message' : 'success-message'}>{clearDbMessage}</p>}
             
@@ -107,7 +110,7 @@ function AdminPage() {
                     <div className="form-group">
                         <input type="text" placeholder="Navn" value={elevNavn} onChange={(e) => setElevNavn(e.target.value)} required />
                         <AutocompleteSearch
-                            suggestionsList={klasseliste.map(k => ({ klasse: k }))}
+                            suggestionsList={KLASSELISTE.map(k => ({ klasse: k }))}
                             displayField="klasse"
                             placeholder="Klasse"
                             value={elevKlasse}
@@ -128,7 +131,7 @@ function AdminPage() {
             <section className="admin-section glass-box">
                 <h2>Importer elever fra Excel</h2>
                 <div className="import-group">
-                    <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
+                    <input ref={fileInputRef} type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
                     <button onClick={handleImportSubmit}>Importer elever</button>
                 </div>
                 <p>Merk: For en ren import, må du først tømme databasen i seksjonen under.</p>

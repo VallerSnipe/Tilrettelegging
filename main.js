@@ -1,11 +1,10 @@
 // main.js
 
-const { app, BrowserWindow, ipcMain, net, shell, Notification, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, net, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const log = require('electron-log');
 const semver = require('semver');
-const serverApp = require('./server.js');
 
 const { connectToDatabase } = require('./db.js');
 const { runMigrations } = require('./database-migration.js');
@@ -19,8 +18,6 @@ function configureLogging() {
     log.transports.file.resolvePathFn = () => path.join(app.getPath('userData'), 'logs/main.log');
     log.info('--- Ny app-økt startet ---');
 }
-
-const PORT = 3001;
 
 function checkForUpdates() {
     log.info('Starter sjekk for oppdateringer...');
@@ -62,73 +59,69 @@ function checkForUpdates() {
     request.end();
 }
 
-function startServer() {
-    serverApp.listen(PORT, () => {
-        log.info(`Backend-server for utvikling startet.`);
-    });
-}
-
 function createWindow() {
-    mainWindow = new BrowserWindow({ width: 1400, height: 900, icon: path.join(__dirname, 'frontend/public/Valler.png'), webPreferences: { preload: path.join(__dirname, 'preload.js'), webSecurity: true, nodeIntegration: false, contextIsolation: true, }, });
+    mainWindow = new BrowserWindow({
+        width: 1400,
+        height: 900,
+        show: false,
+        icon: path.join(__dirname, 'frontend/public/Valler.png'),
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            webSecurity: true,
+            nodeIntegration: false,
+            contextIsolation: true,
+        },
+    });
     mainWindow.setMenu(null);
+    mainWindow.center();
+
+    const showMainWindow = () => {
+        if (!mainWindow || mainWindow.isDestroyed()) return;
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+        log.info(`Vindu vist: isVisible=${mainWindow.isVisible()}, bounds=${JSON.stringify(mainWindow.getBounds())}`);
+    };
+
+    mainWindow.once('ready-to-show', showMainWindow);
+    mainWindow.webContents.once('did-finish-load', () => {
+        if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+            showMainWindow();
+        }
+    });
+
     const isDev = !app.isPackaged;
     if (isDev) {
-        mainWindow.loadURL('http://localhost:5174');
+        const devUrl = 'http://localhost:5174';
+        mainWindow.webContents.on('did-fail-load', (_event, errorCode) => {
+            if (errorCode === -102 || errorCode === -105) {
+                setTimeout(() => {
+                    if (mainWindow && !mainWindow.isDestroyed()) {
+                        mainWindow.loadURL(devUrl);
+                    }
+                }, 1000);
+            }
+        });
+        mainWindow.loadURL(devUrl);
         mainWindow.webContents.openDevTools();
     } else {
         mainWindow.loadFile(path.join(__dirname, 'frontend/dist/index.html'));
     }
-    // Når innholdet er lastet, injiser en liten badge med versjonsnummer nederst til høyre
-    const injectVersionBadge = () => {
-        const script = `
-          (async () => {
-            try {
-              if (window?.api?.sendRequest) {
-                const version = await window.api.sendRequest({ method: 'GET', endpoint: '/app/version' });
-                if (typeof version === 'string' && version.length > 0) {
-                  const el = document.createElement('div');
-                  el.textContent = 'v' + version;
-                  el.setAttribute('aria-label', 'Appversjon');
-                  el.style.position = 'fixed';
-                  el.style.right = '12px';
-                  el.style.bottom = '12px';
-                  el.style.padding = '4px 8px';
-                  el.style.borderRadius = '6px';
-                  el.style.fontFamily = "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
-                  el.style.fontSize = '12px';
-                  el.style.color = '#E5E7EB';
-                  el.style.background = 'rgba(31,41,55,0.6)';
-                  el.style.border = '1px solid rgba(255,255,255,0.12)';
-                  el.style.backdropFilter = 'blur(6px)';
-                  el.style.webkitBackdropFilter = 'blur(6px)';
-                  el.style.zIndex = '1000';
-                  document.body.appendChild(el);
-                }
-              }
-            } catch (e) { }
-          })();
-        `;
-        mainWindow.webContents.executeJavaScript(script).catch(() => {});
-    };
-    mainWindow.webContents.on('did-finish-load', injectVersionBadge);
     mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 app.whenReady().then(() => {
+    if (process.platform === 'win32') {
+        app.setAppUserModelId('com.valler.tilretteleggingapp');
+    }
     configureLogging();
 
     const isPackaged = app.isPackaged;
     let dbPath;
     if (isPackaged) {
         const userDataPath = app.getPath('userData');
+        fs.mkdirSync(userDataPath, { recursive: true });
         dbPath = path.join(userDataPath, 'tilrettelegging.db');
-        const sourceDbPath = path.join(__dirname, 'tilrettelegging.db');
-        if (fs.existsSync(sourceDbPath) && !fs.existsSync(dbPath)) {
-            try {
-                fs.copyFileSync(sourceDbPath, dbPath);
-                log.info(`Database kopiert til ${dbPath}`);
-            } catch (err) { log.error('Kunne ikke kopiere database:', err); }
-        }
     } else {
         dbPath = path.join(__dirname, 'tilrettelegging.db');
     }
@@ -136,9 +129,10 @@ app.whenReady().then(() => {
     try {
         db = connectToDatabase(dbPath);
         runMigrations(db);
-    } catch(err) {
+    } catch (err) {
         log.error("KRITISK FEIL VED DATABASE-INIT:", err);
         app.quit();
+        return;
     }
 
     dbHandler = dbHandlerFactory(db);
@@ -179,13 +173,11 @@ app.whenReady().then(() => {
         }
     });
     
-    // NY HANDLER FOR FILIMPORT
+    // HANDLER FOR FILIMPORT
     ipcMain.handle('import-file', (event, filePath) => {
         return dbHandler.importExcelData(filePath);
     });
 
-    const isDev = !app.isPackaged;
-    if (isDev) { startServer(); }
     createWindow();
     checkForUpdates();
     app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });

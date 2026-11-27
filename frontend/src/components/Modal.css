@@ -59,6 +59,14 @@
     box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
+/* Label for input-modaler (f.eks. ExportRoomModal) */
+.modal-label {
+    display: block;
+    margin: 0.75rem 0 0.5rem 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
 /* Felles knapper for alle modalvinduer */
 .modal-actions {
     display: flex;
